@@ -1,8 +1,6 @@
 <template>
   <div class="hello">
-    <h1>{{ msg }}</h1>
-    <v-table />
-    <v-table-column />
+    <v-construction />
   </div>
 </template>
 
