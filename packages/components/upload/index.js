@@ -1,4 +1,4 @@
-import Upload from './src/Upload.vue'
+import Upload from './src/upload.vue'
 
 Upload.install = (vue) => {
   vue.component(Upload.name, Upload)
