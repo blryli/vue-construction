@@ -1,6 +1,6 @@
 <template>
   <div class="v-text">
-    <div class="v-construction-btn" @click="handleClick">添加文字</div>
+    <div class="v-construction-tool-btn" @click="handleClick">添加文字</div>
   </div>
 </template>
 

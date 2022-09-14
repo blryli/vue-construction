@@ -116,7 +116,10 @@ export function removeClass(el, cls) {
  * @param {节点} target
  */
 export const getDomClientRect = function(target) {
-  if (!target) console.error('获取id节点失败')
+  if (!target) {
+    // console.error('获取id节点失败')
+    return {}
+  }
   const { top, bottom, left, right, width: targetWidth, height: targetHeight } = target.getBoundingClientRect()
   const width = targetWidth || right - left
   const height = targetHeight || bottom - top

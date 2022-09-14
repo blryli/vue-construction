@@ -1,7 +1,7 @@
-import Upload from './src/upload.vue'
+import Index from './src/index.vue'
 
-Upload.install = (vue) => {
-  vue.component(Upload.name, Upload)
+Index.install = (vue) => {
+  vue.component(Index.name, Index)
 }
 
-export default Upload
+export default Index

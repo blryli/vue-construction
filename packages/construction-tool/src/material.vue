@@ -1,10 +1,10 @@
 <template>
   <div class="v-material">
-    <div class="v-construction-btn" @click="handleClick">添加素材</div>
+    <div class="v-construction-tool-btn" @click="handleClick">添加素材</div>
     <v-upload ref="upload" :show-btn="false" :show-img="false" @change="upload" />
     <div class="v-material__list">
       <div v-for="(d, i) in list" :key="i" class="v-material__list-item">
-        <div class="v-material__list-box">
+        <div class="v-material__list-box" @click="emitUpload(d)">
           <img :src="d" class="v-material__img">
         </div>
       </div>
@@ -14,6 +14,7 @@
 
 <script>
 import VUpload from '../../components/upload'
+import { tt } from '../../utils/img'
 export default {
   name: 'Material',
   components: { VUpload },
@@ -22,7 +23,7 @@ export default {
   },
   data() {
     return {
-      list: []
+      list: [tt]
     }
   },
   mounted() {
@@ -34,6 +35,9 @@ export default {
     },
     upload(img) {
       this.list.push(img)
+      this.emitUpload(img)
+    },
+    emitUpload(img) {
       this.$emit('upload', img)
     }
   }

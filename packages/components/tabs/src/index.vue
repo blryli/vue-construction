@@ -31,7 +31,7 @@ export default {
         ])
       ]),
       h('div', { class: 'v-tabs__content' }, [
-        h('div', { class: 'v-tabs__content-item' }, [slots[activeIndex]])
+        slots.map((d, i) => h('div', { class: ['v-tabs__content-item', activeIndex === i ? 'active' : ''] }, [d]))
       ])
     ])
   }
@@ -60,6 +60,8 @@ export default {
       font-size: 14px;
       color: #666;
       text-align: center;
+      cursor: pointer;
+      user-select: none;
       &.active{
         color: #333;
         border-color:  #ddd;
@@ -70,6 +72,12 @@ export default {
   &__content{
     overflow: hidden;
     position: relative;
+    &-item{
+      display: none;
+      &.active{
+        display: block;
+      }
+    }
   }
 }
 </style>

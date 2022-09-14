@@ -11,9 +11,10 @@
       <div class="v-construction__collapse-active--line" />
     </div>
     <div id="canvas" class="v-construction__canvas-content" :style="styles">
-      <div class="v-construction__canvas-background" :style="bkgStyle">
+      <div class="v-construction__canvas-background" :style="bgStyle">
         <CanvasList
-          :list="value"
+          v-if="list.length"
+          v-model="list"
           @item-change="itemChange"
           @item-move="itemMove"
         />
@@ -30,18 +31,16 @@ const canvasSize = {
   '3': { title: '横版广告', width: 900, height: 500 },
   '4': { title: '原尺寸', width: 1242, height: 2208 }
 }
-import { on, off, hasClass } from './utils/dom'
+import { on, off, hasClass } from '../../utils/dom'
 import CanvasList from './canvas-list'
 export default {
   name: 'VConstructionCanvas',
   components: { CanvasList },
   props: {
-    value: { type: Array, default: () => [] },
-    canvasType: { type: String, default: '4' },
+    value: { type: Array, default: () => ([]) },
+    canvasType: { type: String, default: '2' },
     collapseActive: { type: Boolean },
-    checkId: { type: String, default: '' },
-    bgImg: { type: String, default: '' },
-    bgType: { type: Number, default: 0 }
+    checkId: { type: String, default: '' }
   },
   provide() {
     return {
@@ -57,6 +56,14 @@ export default {
     }
   },
   computed: {
+    list: {
+      get() {
+        return this.value
+      },
+      set(val) {
+        this.$emit('input', val)
+      }
+    },
     styles() {
       const { canvasType, canvasStyles } = this
       const styles = { width: 0, height: 0 }
@@ -84,16 +91,19 @@ export default {
       styles.left = toolWidth
       return styles
     },
-    bkgStyle() {
+    bgStyle() {
       const styles = { width: 0, height: 0, backgroundColor: 'transparent' }
-      const { value } = this
+      const { list } = this
+      if (!list.length) return {}
       const { width, height } = this.styles
       styles.width = width
       styles.height = height
-      if (this.bgType === 0) {
-        styles.backgroundColor = (value.find(d => d.type === 'bg') || { style: { background: '#fff' }}).style.backgroundColor
-      } else {
-        styles.backgroundImage = `url(${this.bgImg})`
+      const bg = list.find(d => d.type === 'bg') || {}
+      const { bgType, backgroundColor, backgroundImage } = bg
+      if (bgType === 'color') {
+        styles.backgroundColor = backgroundColor || '#fff'
+      } else if (backgroundImage) {
+        styles.backgroundImage = `url(${backgroundImage})`
       }
       return styles
     }
@@ -121,13 +131,13 @@ export default {
       const { itemId, x, y, width, height, fontSize } = item
       const list = [...this.value]
       list.forEach(d => {
-        const { pos, style } = d
+        const { pos } = d
         if (itemId === d.itemId) {
           if (x) pos.x += x
           if (y) pos.y += y
-          if (width) style.width += width
-          if (height) style.height += height
-          if (fontSize) style.fontSize = fontSize
+          if (width) d.width += width
+          if (height) d.height += height
+          if (fontSize) d.fontSize = Math.max(fontSize, 12)
           setTimeout(() => {
             this.root.checkId = itemId
           })
@@ -144,7 +154,6 @@ export default {
     },
     getItem(event) {
       let cell = event.target
-      console.log({ cell })
 
       while (cell && cell.tagName.toUpperCase() !== 'HTML') {
         if (hasClass(cell, 'canvas-item')) {
@@ -157,7 +166,6 @@ export default {
     },
     handleItem(e, type) {
       const { value, getItem } = this
-      console.log(e)
       const itemNode = getItem(e)
       if (itemNode) {
         const itemid = itemNode.getAttribute('data-itemid')
@@ -165,10 +173,12 @@ export default {
           const item = value.find(d => d.itemId === itemid)
           if (item) {
             this.root[type] = itemid
+            if (type === 'editId' && item.type === 'img') {
+              this.root.handleUpload()
+            }
           }
         }
       } else {
-        console.log(itemNode)
         this.root[type] = null
         this.root.editId = null
       }
@@ -277,12 +287,22 @@ export default {
     right: 0;
     bottom: 0;
     display: inline-block;
+    z-index: 2;
     padding: 5px;
     border: 2px solid transparent;
     user-select: none;
     box-sizing: border-box;
-    &:hover{
-      // border-color: #80a3ff;
+  }
+  .canvas-item__img{
+    overflow: hidden;
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    right: 10px;
+    bottom: 10px;
+    &-content{
+      width: 100%;
+      height: 100%;
     }
   }
 }

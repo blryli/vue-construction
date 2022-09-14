@@ -17,7 +17,7 @@ export const getRowId = function(table, row) {
  * @param {params} params
  */
 export const getId = function(randomLength = 6) {
-  return Number(Math.random().toString().substr(3, randomLength) + Date.now()).toString(36)
+  return Number(Math.random().toString().substring(3, randomLength) + Date.now()).toString(36)
 }
 
 /**

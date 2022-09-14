@@ -1,6 +1,6 @@
 <template>
   <div class="hello">
-    <v-construction />
+    <v-construction v-model="list" />
   </div>
 </template>
 
@@ -9,6 +9,11 @@ export default {
   name: 'HelloWorld',
   props: {
     msg: { type: String, default: '' }
+  },
+  data() {
+    return {
+      list: []
+    }
   }
 }
 </script>

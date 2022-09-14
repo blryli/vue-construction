@@ -1,7 +1,7 @@
 <template>
   <div tabindex="0" class="v-upload">
     <div v-if="showImg" class="v-upload__content">
-      <img ref="img" :src="img" class="v-upload__content-img">
+      <img v-if="img" ref="img" :src="img" class="v-upload__content-img">
     </div>
     <input ref="input" type="file" name="file" class="v-upload__input" accept=".png, .jpg, .jpeg" @change="change">
     <div v-if="showBtn" class="v-upload__btn" @click="handleClick">替换背景</div>
@@ -9,7 +9,7 @@
 </template>
 <script>
 export default {
-  name: 'VTabs',
+  name: 'VUpload',
   components: { },
   props: {
     value: { type: String, default: '' },

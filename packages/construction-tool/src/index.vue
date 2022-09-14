@@ -1,8 +1,8 @@
 <template>
   <div class="v-construction__tool" :class="{'activated': activated}">
     <div class="v-construction__tool__menu">
-      <div class="v-construction__tool__menu-tiem" @click="textClick">文字</div>
-      <div class="v-construction__tool__menu-tiem" @click="materialClick">素材</div>
+      <div v-for="(d, i) in menuList" :key="i" :class="['v-construction__tool__menu-tiem', activeIndex === i ? 'active' : '']" @click="() => menuClick(d, i)">{{ d.title }}</div>
+      <div class="hr" />
       <div class="v-construction__tool__menu-tiem" @click="saveClick">保存</div>
     </div>
     <div v-if="activated" class="v-construction__tool-collapse">
@@ -25,44 +25,46 @@ export default {
   name: 'VConstructionTool',
   components: { VMaterial, VText },
   props: {
-    value: { type: Array, default: () => [] },
+    value: { type: Array, default: () => ([]) },
     activated: { type: Boolean }
   },
   data() {
     return {
       menuList: [
-        { name: '文字', type: 'text' },
-        { name: '保存', type: 'save' }
+        { title: '文字', type: 'text' },
+        { title: '素材', type: 'material' }
       ],
       collapseType: 'text',
-      snapshoot: ''
+      snapshoot: '',
+      activeIndex: 0
     }
   },
   computed: {
-
+    list: {
+      get() {
+        return this.value
+      },
+      set(val) {
+        this.$emit('input', val)
+      }
+    }
   },
   mounted() {
     this.$nextTick(() => {
       this.canvasNode = document.getElementById('canvas')
-      console.log(this.canvasNode)
     })
   },
   methods: {
     addText() {
-      const list = [...this.value]
-      list.push(Object.assign({}, { itemId: getId() }, text()))
-      this.$emit('input', list)
+      this.list.push(Object.assign({}, { itemId: getId() }, text()))
     },
     upload(base) {
-      const list = [...this.value]
-      list.push(Object.assign({}, img(), { itemId: getId(), img: base }))
-      this.$emit('input', list)
+      this.list.push(Object.assign({}, img(), { itemId: getId(), img: base }))
     },
-    textClick() {
-      this.collapseType = 'text'
-    },
-    materialClick() {
-      this.collapseType = 'material'
+    menuClick(d, i) {
+      const { type } = d
+      this.collapseType = type
+      this.activeIndex = i
     },
     saveClick() {
       this.convertToImage(this.canvasNode).then(res => {
@@ -86,8 +88,8 @@ export default {
       // html2canvas配置项
       const ops = {
         scale,
-        // width,
-        // height,
+        width,
+        height,
         useCORS: true,
         allowTaint: false,
         ...options
@@ -97,11 +99,6 @@ export default {
         // 返回图片的二进制数据
         return canvas.toDataURL('image/png')
       })
-    },
-    // 上传图片
-    bgImgChange(img) {
-      console.log(img)
-      this.$emit('bg-img-change', img)
     }
   }
 }
@@ -129,8 +126,9 @@ export default {
       text-align: center;
       color: #666;
       cursor: pointer;
-      &:hover{
+      &:hover, &.active{
         color: #222;
+        font-weight: bold;
       }
     }
   }
@@ -156,14 +154,24 @@ export default {
     box-sizing: border-box;
   }
 }
-.v-construction-btn{
-  height: 24px;
-  line-height: 24px;
+.v-construction-tool-btn{
+  height: 30px;
+  line-height: 30px;
   padding: 0 10px;
-  background-color: #aaa;
+  font-size: 14px;
+  background-color: #666;
   border-radius: 50px;
   color: #fff;
   text-align: center;
   cursor: pointer;
+  &:hover{
+    background-color: #888;
+  }
+}
+.hr{
+  width: 100%;
+  height: 1px;
+  background-color: #ccc;
+  margin: 10px 0;
 }
 </style>

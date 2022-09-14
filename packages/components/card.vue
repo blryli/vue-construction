@@ -10,14 +10,14 @@
     @mouseleave="handleMouseleave"
   >
     <div ref="body" class="eff-card__body">
-      <div class="eff-card__body-lefttop" />
-      <div class="eff-card__body-top" />
-      <div class="eff-card__body-topright" />
-      <div class="eff-card__body-right" />
-      <div class="eff-card__body-rightbottom" />
-      <div class="eff-card__body-bottom" />
-      <div class="eff-card__body-bottomleft" />
-      <div class="eff-card__body-left" />
+      <div v-if="isHandle && showCursors.lefttop !== false" ref="lefttop" class="eff-card__body-lefttop" />
+      <div v-if="isHandle && showCursors.top !== false" ref="top" class="eff-card__body-top" />
+      <div v-if="isHandle && showCursors.topright !== false" ref="topright" class="eff-card__body-topright" />
+      <div v-if="isHandle && showCursors.right !== false" ref="right" class="eff-card__body-right" />
+      <div v-if="isHandle && showCursors.rightbottom !== false" ref="rightbottom" class="eff-card__body-rightbottom" />
+      <div v-if="isHandle && showCursors.bottom !== false" ref="bottom" class="eff-card__body-bottom" />
+      <div v-if="isHandle && showCursors.bottomleft !== false" ref="bottomleft" class="eff-card__body-bottomleft" />
+      <div v-if="isHandle && showCursors.left !== false" ref="left" class="eff-card__body-left" />
       <slot />
     </div>
   </div>
@@ -31,20 +31,23 @@ export default {
   props: {
     width: { type: Number, default: 250 },
     height: { type: Number, default: 250 },
-    minWidth: { type: Number, default: 100 },
-    minHeight: { type: Number, default: 200 },
+    minWidth: { type: Number, default: 50 },
+    minHeight: { type: Number, default: 50 },
     fontSize: { type: Number, default: 12 },
     zoom: { type: Number, default: 1 },
     show: Boolean,
     inline: Boolean,
-    limit: { type: Number, default: 15 }
+    isHandle: { type: Boolean, default: true },
+    limit: { type: Number, default: 15 },
+    showCursors: { type: Object, default: () => {} }
   },
-  inject: ['canvas'],
+  inject: ['root', 'canvas'],
   data() {
     return {
       endRect: { width: this.width, height: this.height },
       move: { x: 0, y: 0, width: 0, height: 0 },
       cursor: null,
+      cursorNode: null,
       isDraging: false
     }
   },
@@ -57,8 +60,12 @@ export default {
         width: width + 'px',
         height: height + 'px',
         transform: `translate(${x}px, ${y}px)`,
-        fontSize: `${this.fontSize + moveHeight}px`
+        fontSize: `${Math.max(height * (30 / 36), 12)}px !important`
       }
+    },
+    eq() {
+      const { width, height } = this
+      return (width / height).toFixed(2)
     }
   },
   watch: {
@@ -77,9 +84,10 @@ export default {
   },
   methods: {
     update() {
-      const { width, height } = this.move
-      this.endRect.width = Math.trunc(this.width + width)
-      this.endRect.height = Math.trunc(this.height + height)
+      const { move, minWidth, minHeight } = this
+      const { width, height } = move
+      this.endRect.width = Math.max(this.width + width, minWidth)
+      this.endRect.height = Math.max(this.height + height, minHeight)
       this.$emit('move', this.move)
     },
     handleMousedown(e) {
@@ -111,6 +119,7 @@ export default {
       for (const key in cursors) {
         if (hasClass(target, key)) {
           this.cursor = cursors[key]
+          this.cursorNode = this.$refs[key.substring(15)]
           hasCursor = true
         }
       }
@@ -124,35 +133,44 @@ export default {
       document.body.style.cursor = ''
     },
     start() {
-      this.isDraging = true
     },
     moveing(x, y) {
-      const { cursor } = this
+      this.isDraging = true
+      const { cursor, cursorNode, eq, width: startWidth, height: startHeight } = this
       let move = {}
-      if (cursor.startsWith('ns-resize')) {
-        move =
-          cursor.indexOf('top') > -1
-            ? { x: 0, y, width: 0, height: -y }
-            : { x: 0, y: 0, width: 0, height: y }
-      } else if (cursor.startsWith('nesw-resize')) {
-        move =
-          cursor.indexOf('top') > -1
-            ? { x: 0, y, width: x, height: -y }
-            : { x, y: 0, width: -x, height: y }
-      } else if (cursor.startsWith('nwse-resize')) {
-        move =
-          cursor.indexOf('top') > -1
-            ? { x, y, width: -x, height: -y }
-            : { x: 0, y: 0, width: x, height: y }
-      } else if (cursor.startsWith('ew-resize')) {
-        move =
-          cursor.indexOf('left') > -1
-            ? { x, y: 0, width: -x, height: 0 }
-            : { x: 0, y: 0, width: x, height: 0 }
-      } else if (cursor === 'move') {
+      const eqX = Math.trunc(x / eq) // 等比缩放
+      // console.log({ x, y }, parseInt(-0))
+      if (!parseInt(x) && !parseInt(y)) return
+      if (cursor === 'move') { // 移动
         move = { x, y, width: 0, height: 0 }
+      } else {
+        if (cursor.startsWith('ns-resize')) { // 垂直
+          if (cursor.indexOf('top') > -1) { // 上拉伸
+            move = { x: 0, y, width: 0, height: -y }
+          } else { // 下拉伸
+            move = { x: 0, y: 0, width: 0, height: y }
+          }
+        } else if (cursor.startsWith('nesw-resize')) {
+          if (cursor.indexOf('top') > -1) { // 右上角
+            move = { x: 0, y: -eqX, width: x, height: eqX }
+          } else { // 左下角
+            move = { x: x, y: 0, width: -x, height: -eqX }
+          }
+        } else if (cursor.startsWith('nwse-resize')) {
+          if (cursor.indexOf('top') > -1) { // 左上角
+            move = { x: x, y: eqX, width: -x, height: -eqX }
+          } else { // 右下角
+            move = { x: 0, y: 0, width: x, height: eqX }
+          }
+        } else if (cursor.startsWith('ew-resize')) {
+          if (cursor.indexOf('left') > -1) { // 左拉伸
+            move = { x, y: 0, width: -x, height: 0 }
+          } else { // 右拉伸
+            move = { x: 0, y: 0, width: x, height: 0 }
+          }
+        }
+        cursorNode && this.root.showPopover({ reference: cursorNode, placement: 'right', effect: 'dark', addToBody: true, message: [{ message: startWidth + x }, { message: startHeight - y }] }, true)
       }
-      if (move.height) move.fontSize = this.fontSize + move.height
       this.move = move
     },
     end() {
@@ -161,6 +179,7 @@ export default {
       if (x === 0 && y === 0 && width === 0 && height === 0) return
       this.$emit('end', this.move)
       this.move = { x: 0, y: 0, width: 0, height: 0 }
+      this.root.hidePopover()
     }
   }
 }
@@ -174,10 +193,11 @@ export default {
   right: 0;
   bottom: 0;
   z-index: 2;
-  border: 2px solid #80a3ff;
+  border: 2px solid transparent;
   box-sizing: border-box;
   transition: box-shadow .3s;
-  &:hover{
+  &:hover, &.active{
+    border-color: #80a3ff;
     box-shadow: 0 1px 10px rgba($color: #000000, $alpha: .1);
   }
 
