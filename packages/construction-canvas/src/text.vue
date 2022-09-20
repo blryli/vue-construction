@@ -33,15 +33,18 @@ export default {
       if (width) item.width += width
       if (height) item.height += height
       if (fontSize) item.fontSize = Math.max(fontSize, 12)
+      this.$set(this, 'item', item)
       setTimeout(() => {
         this.root.checkId = itemId
+        this.$emit('item-change', Object.assign({ itemId }, move))
       })
-      this.$set(this, 'item', item)
       // console.log({ x, y, width, height })
     },
     handleMove(move) {
       const { root, item } = this
-      root.checkId = item.itemId
+      const { itemId } = item
+      root.checkId = itemId
+      this.$emit('item-move', Object.assign({ itemId }, move))
     }
   },
   render(h) {
@@ -55,7 +58,7 @@ export default {
     return h(Card, {
       style: { color, fontFamily },
       class: root.checkId === itemId ? ' active' : '',
-      props: { isHandle: root.checkId === itemId, width: width + 20, height: height + 20, show: true, zoom: canvas.canvasRatio, showCursors },
+      props: { isHandle: root.checkId === itemId, width, height, show: true, zoom: canvas.canvasRatio, showCursors },
       on: { 'end': handleEnd, 'move': handleMove }
     }, [node])
   }

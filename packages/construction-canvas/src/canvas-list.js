@@ -23,15 +23,23 @@ export default {
   mounted() {
 
   },
+  methods: {
+    itemMove(move) {
+      this.$emit('item-move', move)
+    },
+    itemChange(move) {
+      this.$emit('item-change', move)
+    }
+  },
   render(h) {
-    const { list } = this
+    const { list, itemMove, itemChange } = this
     const render = list.map((d, i) => {
       const { itemId, type, content, width, height, fontSize, color, pos, fontFamily } = d
       let node = content
       if (type === 'text') {
-        node = h(VText, { props: { value: d }, on: { input: (val) => (list[i] = val) }})
+        node = h(VText, { props: { value: d }, on: { input: (val) => (list[i] = val), 'item-move': itemMove, 'item-change': itemChange }})
       } else if (type === 'img') {
-        node = h(VImg, { props: { value: d }, on: { input: (val) => (list[i] = val) }})
+        node = h(VImg, { props: { value: d }, on: { input: (val) => (list[i] = val), 'item-move': itemMove, 'item-change': itemChange }})
       }
       if (type === 'text' || type === 'img') {
         let transform = ''

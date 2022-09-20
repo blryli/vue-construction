@@ -48,7 +48,7 @@ export default {
     const { list, checkType, checkIndex } = this
     const nodeMap = {
       'bg': VBackground,
-      'imag': VImg,
+      'img': VImg,
       'text': VText
     }
     const getNode = (type) => h(nodeMap[type], { ref: type, props: { value: list[checkIndex] }, on: { input: val => this.$set(this, 'list', val) }})

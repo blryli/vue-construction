@@ -59,12 +59,6 @@ export default {
       set(val) {
         this.$emit('input', val)
       }
-    },
-    posList() {
-      return this.list.map(d => {
-        const { pos: { x, y }, width, height } = d
-        return { left: x, top: y, right: x + width, bottom: y + height }
-      })
     }
   },
   methods: {

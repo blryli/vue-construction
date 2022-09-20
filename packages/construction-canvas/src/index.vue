@@ -10,8 +10,12 @@
       <div class="v-construction__collapse-active--btn" />
       <div class="v-construction__collapse-active--line" />
     </div>
+    {{ root.posList }}
     <div id="canvas" class="v-construction__canvas-content" :style="styles">
       <div class="v-construction__canvas-background" :style="bgStyle">
+        <div class="v-construction__canvas-lines">
+          <div v-for="(d, i) in lines" :key="i" :class="['v-construction__canvas-lines--item', `is--${d.type}`]" :style="lineItemStyle(d)" />
+        </div>
         <CanvasList
           v-if="list.length"
           v-model="list"
@@ -52,7 +56,8 @@ export default {
     return {
       innerHeight: 0,
       innerWidth: 0,
-      canvasRatio: 1
+      canvasRatio: 1,
+      lines: []
     }
   },
   computed: {
@@ -63,6 +68,16 @@ export default {
       set(val) {
         this.$emit('input', val)
       }
+    },
+    posList() {
+      const { list } = this
+      return list.reduce((acc, cur) => {
+        const { type, itemId, pos: { x, y } = {}, width, height } = cur
+        // console.log('type', type)
+        return type === 'bg'
+          ? acc.concat({ itemId, left: 0, top: 0, right: width, bottom: height, aCenter: width / 2, vCenter: height / 2 })
+          : acc.concat([{ itemId, left: x, top: y, right: x + width, bottom: y + height, aCenter: x + width / 2, vCenter: y + height / 2 }])
+      }, [])
     },
     styles() {
       const { canvasType, canvasStyles } = this
@@ -75,8 +90,8 @@ export default {
       } else if (canvaSizeWidth < canvasSizeHeight) {
         ratio = canvasSizeHeight > canvasHeight ? canvasHeight / canvasSizeHeight : 1
       }
-      styles.width = canvaSizeWidth - 40 + 'px'
-      styles.height = canvasSizeHeight - 40 + 'px'
+      styles.width = canvaSizeWidth + 'px'
+      styles.height = canvasSizeHeight + 'px'
       const canvasRatio = canvaSizeWidth * ratio > canvasWidth ? canvasWidth / (canvaSizeWidth * ratio) - ratio : ratio
       this.setCanvasRatio(canvasRatio)
       styles.transform = `translate(-50%, -50%) scale(${canvasRatio})`
@@ -127,27 +142,54 @@ export default {
       this.$emit('collapse-change', !this.collapseActive)
     },
     itemChange(item) {
-      console.log(item)
-      const { itemId, x, y, width, height, fontSize } = item
-      const list = [...this.value]
-      list.forEach(d => {
-        const { pos } = d
-        if (itemId === d.itemId) {
-          if (x) pos.x += x
-          if (y) pos.y += y
-          if (width) d.width += width
-          if (height) d.height += height
-          if (fontSize) d.fontSize = Math.max(fontSize, 12)
-          setTimeout(() => {
-            this.root.checkId = itemId
-          })
-          // console.log({ x, y, width, height })
-        }
-      })
-      this.$emit('input', list)
+      this.lines = []
+      // this.$emit('input', list)
     },
     itemMove(item) {
-
+      const { x, y, width, height } = item
+      if (width || height) return
+      if (x !== 0 || y !== 0) {
+        const { posList, checkId } = this
+        const checkItem = posList.find(d => d.itemId === checkId)
+        if (checkItem) {
+          const { left: startLeft, top: startTop, right: startRight, bottom: startBottom, aCenter: startACenter, vCenter: startVCenter } = checkItem // 移动中的节点
+          const endLeft = startLeft + x
+          const endTop = startTop + y
+          const endRight = startRight + x
+          const endBottom = startBottom + y
+          const endACenter = startACenter + x
+          const endVCenter = startVCenter + y
+          this.lines = posList.reduce((list, item) => {
+            const { itemId, left, top, right, bottom, aCenter, vCenter } = item // 匹配节点
+            if (itemId === checkId) {
+              return list
+            } else {
+              const isLine = val => [1, 0, -1].indexOf(val) !== -1
+              // 纵向匹配
+              const vLines = [left, right, aCenter].reduce((lines, line) => {
+                return lines.concat([endLeft, endRight, endACenter].reduce((acc, cur) => {
+                  return isLine(line - cur) ? acc.concat({ type: 'vertical', left: line, top: Math.min(top, endTop), bottom: Math.max(bottom, endBottom) }) : acc
+                }, []))
+              }, [])
+              // 横向匹配
+              const aLines = [top, bottom, vCenter].reduce((lines, line) => {
+                return lines.concat([endTop, endBottom, endVCenter].reduce((acc, cur) => {
+                  return isLine(line - cur) ? acc.concat({ type: 'across', left: Math.min(left, endLeft), top: line, right: Math.max(right, endRight) }) : acc
+                }, []))
+              }, [])
+              return list.concat(aLines).concat(vLines)
+            }
+          }, [])
+        }
+      }
+    },
+    lineItemStyle(d) {
+      const { type, left, top, right, bottom } = d
+      if (type === 'vertical') {
+        return { left: left + 'px', top: top + 'px', height: bottom - top + 'px' }
+      } else {
+        return { left: left + 'px', top: top + 'px', width: right - left + 'px' }
+      }
     },
     setCanvasRatio(canvasRatio) {
       this.canvasRatio = canvasRatio
@@ -219,6 +261,21 @@ export default {
     background-repeat: no-repeat;
     background-size: 100% 100%;
   }
+  &-lines{
+    position: absolute;
+    z-index: 10;
+    overflow: visible;
+    &--item{
+      position: absolute;
+      background-color: red;
+      &.is--vertical{
+        width: 2px;
+      }
+      &.is--across{
+        height: 2px;
+      }
+    }
+  }
 }
 .v-construction__collapse-active {
   position: absolute;
@@ -271,7 +328,7 @@ export default {
         transform: rotate(-45deg);
       }
     }
-    }
+  }
 }
 .canvas-list{
   position: absolute;
@@ -296,10 +353,10 @@ export default {
   .canvas-item__img{
     overflow: hidden;
     position: absolute;
-    left: 10px;
-    top: 10px;
-    right: 10px;
-    bottom: 10px;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
     &-content{
       width: 100%;
       height: 100%;

@@ -14,15 +14,6 @@
         </VSlect>
       </div>
     </div>
-    <div class="v-construction__styles-item">
-      <select id="11" name="11">
-        <option value="11">11</option>
-        <option value="22">22</option>
-      </select>
-    </div>
-    <div class="v-construction__styles-bg">
-      11
-    </div>
     <div class="v-construction__styles-title">文字颜色</div>
     <div class="v-construction__styles-item">填充</div>
     <div class="v-construction__styles-item">描边</div>
@@ -67,8 +58,12 @@ export default {
         return this.value
       },
       set(val) {
-        console.log(val)
         this.$emit('input', val)
+      }
+    },
+    fontSize: {
+      get() {
+        return this.modelValue.height
       }
     }
   },

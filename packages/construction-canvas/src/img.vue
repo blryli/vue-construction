@@ -33,12 +33,15 @@ export default {
       setTimeout(() => {
         this.root.checkId = itemId
         this.isMove = false
+        this.$emit('item-change', Object.assign({ itemId }, move))
       })
     },
     handleMove(move) {
       this.isMove = true
       const { root, item } = this
-      root.checkId = item.itemId
+      const { itemId } = item
+      root.checkId = itemId
+      this.$emit('item-move', Object.assign({ itemId }, move))
     }
   },
   render(h) {
@@ -51,7 +54,7 @@ export default {
     return h(Card, {
       style: { },
       class: root.checkId === itemId ? ' active' : '',
-      props: { isHandle: root.checkId === itemId, width: width + 20, height: height + 20, show: true, zoom: canvas.canvasRatio, fontSize, showCursors },
+      props: { isHandle: root.checkId === itemId, width, height, show: true, zoom: canvas.canvasRatio, fontSize, showCursors },
       on: { 'end': handleEnd, 'move': handleMove }
     }, [node])
   }

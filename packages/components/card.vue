@@ -207,7 +207,6 @@ export default {
     top: 0;
     right: 0;
     bottom: 0;
-    padding: 10px;
     overflow: visible;
     box-sizing: border-box;
     div[class *= eff-card__body-] {
@@ -215,6 +214,7 @@ export default {
       position: absolute;
       background-color: #fff;
       box-sizing: border-box;
+      z-index: 3;
     }
     &-lefttop, &-topright, &-rightbottom, &-bottomleft{
       width: 12px;
